@@ -20,6 +20,7 @@ interface ConnectionContextValue {
     account: Account | null;
     walletConnection: WalletConnection | null;
     nearConfig: NearConfig;
+    signOut: () => void,
 }
 
 
@@ -85,8 +86,6 @@ export const ConnectionContextProvider = ({children}: ConnectionContextProviderP
                 }
 
 
-
-
                 // const setTradingKeyRes = await userRequestSetTradingKey(nearAccount, tradingKeyPair);
 
 
@@ -106,12 +105,19 @@ export const ConnectionContextProvider = ({children}: ConnectionContextProviderP
         init().then();
     }, [init])
 
+    const signOut = useCallback(() => {
+        walletConnection?.signOut();
+        localStorage.removeItem('TradingKeySecret')
+        setAccountId(null);
+    }, [walletConnection])
+
     const providerValue = useMemo(() => ({
         accountId,
         walletConnection,
         nearConfig,
         account,
-    }), [accountId, walletConnection, nearConfig, account])
+        signOut,
+    }), [accountId, walletConnection, nearConfig, account, signOut])
     return (
         <ConnectionContext.Provider value={providerValue}>
             {isLoading ? <LoadingComponent/>

@@ -3,7 +3,7 @@ import {useEffect, useState} from "react";
 import {getNearBalance, setAnnounceKey} from "./services/contract.service";
 import BigNumber from "bignumber.js";
 export function AccountInfoComponent() {
-    const {accountId, account, walletConnection} = useConnection();
+    const {accountId, account, walletConnection, signOut} = useConnection();
     const [nearBalance, setNearBalance] = useState<string | null>(null);
 
     useEffect(() => {
@@ -22,11 +22,13 @@ export function AccountInfoComponent() {
     }
 
 
+
     return (
         <div>
             <p>accountId: {accountId} </p>
             <p>near balance: {nearBalance} near</p>
             <button onClick={onAnnounceKey}>announce key</button>
+            <button onClick={signOut}>logout</button>
         </div>
     )
 }
