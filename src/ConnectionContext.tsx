@@ -1,8 +1,15 @@
 import React, {useCallback, useContext, useEffect, useMemo, useState} from "react";
-import {Account, connect, KeyPair, WalletConnection} from "near-api-js";
+import {Account, connect, WalletConnection} from "near-api-js";
 import {environment} from "./environment/environment";
 import {LoadingComponent} from "./loading.component";
 import {NearConfig} from "near-api-js/lib/near";
+import {
+    checkUserAccountIsExist, getTradingKeyPair,
+    isOrderlyKeyAnnounced, isTradingKeySet, setAnnounceKey,
+    storageBalanceBounds, storageBalanceOf, storageCostOfAnnounceKey,
+    storageDeposit, userRequestSetTradingKey, userStorageUsage
+} from "./services/contract.service";
+import BigNumber from "bignumber.js";
 
 interface ConnectionContextProviderProps {
     children: any;
@@ -39,6 +46,50 @@ export const ConnectionContextProvider = ({children}: ConnectionContextProviderP
             console.log('is sign in', connection.isSignedIn());
             if (connection.isSignedIn()) {
                 const nearAccount = await nearConnection.account(connection.getAccountId());
+                const accountId = connection.getAccountId();
+                const isExist = await checkUserAccountIsExist(accountId);
+                console.log('is exist', isExist);
+                console.log('accountid', accountId)
+                const orderlyKeyPair = await environment.nearWalletConfig.keyStore.getKey(environment.nearWalletConfig.networkId, accountId);
+                if (!isExist) {
+                    const bounds = await storageBalanceBounds(environment.nearWalletConfig.contractName, accountId);
+                    console.log('bounds', bounds)
+                    const storageDepositRes = await storageDeposit(connection, bounds.min);
+                    console.log('storagedeposit', storageDepositRes)
+                }
+                const isAnnounced = await isOrderlyKeyAnnounced(accountId, orderlyKeyPair!);
+                console.log('is announced', isAnnounced)
+                const storageUsage = await userStorageUsage(accountId);
+                console.log('storageusage', storageUsage);
+                const balanceOf = await storageBalanceOf(environment.nearWalletConfig.contractName, accountId);
+                console.log('storage balance', balanceOf);
+                const storageCost = await storageCostOfAnnounceKey()
+                console.log('storage coast', storageCost)
+                const value = new BigNumber(storageUsage).plus(new BigNumber(storageCost)).minus(new BigNumber(balanceOf.total));
+                console.log('value', value.shiftedBy(-24).toString())
+                if (value.isGreaterThan(0)) {
+                    const storageDepositRes = await storageDeposit(connection, value.toFixed());
+                }
+                if (!isAnnounced) {
+                    const setOrderlyKeyRes = await setAnnounceKey(nearAccount!);
+                    console.log('set orderlyKey res', setOrderlyKeyRes);
+                }
+                // if (localStorage.getItem('TradingKeySecret')) {
+                const tradingKeyPair = getTradingKeyPair();
+                const isSet = await isTradingKeySet(accountId, orderlyKeyPair);
+                console.log('isset', isSet);
+                if (!isSet) {
+                    const setTradingKeyRes = await userRequestSetTradingKey(nearAccount, tradingKeyPair);
+                    console.log('set tradingKey res', setTradingKeyRes);
+                    localStorage.setItem('TradingKeySecret', tradingKeyPair.privateKey);
+                }
+
+
+
+
+                // const setTradingKeyRes = await userRequestSetTradingKey(nearAccount, tradingKeyPair);
+
+
                 setAccount(nearAccount)
 
                 setAccountId(connection.getAccountId());
