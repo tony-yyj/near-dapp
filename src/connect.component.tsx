@@ -1,24 +1,23 @@
-import React, {useEffect, useState} from "react";
-import {connect, WalletConnection} from "near-api-js";
-import {environment} from "./environment/environment";
-import {AccountInfoComponent} from "./account-info.component";
+import React from "react";
 import {useConnection} from "./ConnectionContext";
+import {environment} from "./environment/environment";
 
 export const ConnectComponent = () => {
-    const {accountId, walletConnection, nearConfig} = useConnection();
+    const {walletConnection} = useConnection();
 
     const onConnect = () => {
-        walletConnection?.requestSignIn(nearConfig)
+        console.log('methodNames', environment.nearWalletConfig.methodNames);
+        console.log('wallet connections', walletConnection)
+        walletConnection?.requestSignIn({
+            contractId: environment.nearWalletConfig.contractName,
+            // methodNames: environment.nearWalletConfig.methodNames,
+            methodNames: ['33']
+        });
     }
 
     return (
         <div>
-            {accountId?
-                <AccountInfoComponent/>
-                :
-                <button onClick={onConnect}>connect</button>
-            }
-
+            <button onClick={onConnect}>connect</button>
         </div>
     )
 }

@@ -1,13 +1,13 @@
 import React from 'react';
 import './App.css';
-import {ConnectComponent} from "./connect.component";
 import {ConnectionContextProvider} from "./ConnectionContext";
+import {HomePage} from "./home.page";
 
 function App() {
   return (
     <div className="App">
         <ConnectionContextProvider>
-            <ConnectComponent/>
+            <HomePage/>
         </ConnectionContextProvider>
     </div>
   );
