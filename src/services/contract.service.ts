@@ -6,7 +6,7 @@ import {serialize} from "near-api-js/lib/utils";
 
 const MAX_GAS = '300000000000000';
 
-export const setAnnounceKey = async (account: Account) => {
+export const setAnnounceKey = async (account: Account): Promise<any> => {
     return account.functionCall({
         contractId: environment.nearWalletConfig.contractName,
         methodName: 'user_announce_key',
