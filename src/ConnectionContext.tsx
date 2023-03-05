@@ -10,6 +10,7 @@ import {
     storageDeposit, userRequestSetTradingKey, userStorageUsage
 } from "./services/contract.service";
 import BigNumber from "bignumber.js";
+import {BaseWebsocketService} from "./services/base-websocket.service";
 
 interface ConnectionContextProviderProps {
     children: any;
@@ -60,18 +61,18 @@ export const ConnectionContextProvider = ({children}: ConnectionContextProviderP
                 }
                 const isAnnounced = await isOrderlyKeyAnnounced(accountId, orderlyKeyPair!);
                 console.log('is announced', isAnnounced)
-                const storageUsage = await userStorageUsage(accountId);
-                console.log('storageusage', storageUsage);
-                const balanceOf = await storageBalanceOf(environment.nearWalletConfig.contractName, accountId);
-                console.log('storage balance', balanceOf);
-                const storageCost = await storageCostOfAnnounceKey()
-                console.log('storage coast', storageCost)
-                const value = new BigNumber(storageUsage).plus(new BigNumber(storageCost)).minus(new BigNumber(balanceOf.total));
-                console.log('value', value.shiftedBy(-24).toString())
-                if (value.isGreaterThan(0)) {
-                    const storageDepositRes = await storageDeposit(connection, value.toFixed());
-                }
                 if (!isAnnounced) {
+                    const storageUsage = await userStorageUsage(accountId);
+                    console.log('storageusage', storageUsage);
+                    const balanceOf = await storageBalanceOf(environment.nearWalletConfig.contractName, accountId);
+                    console.log('storage balance', balanceOf);
+                    const storageCost = await storageCostOfAnnounceKey()
+                    console.log('storage coast', storageCost)
+                    const value = new BigNumber(storageUsage).plus(new BigNumber(storageCost)).minus(new BigNumber(balanceOf.total));
+                    console.log('value', value.shiftedBy(-24).toString())
+                    if (value.isGreaterThan(0)) {
+                        const storageDepositRes = await storageDeposit(connection, value.toFixed());
+                    }
                     const setOrderlyKeyRes = await setAnnounceKey(nearAccount!);
                     console.log('set orderlyKey res', setOrderlyKeyRes);
                 }
@@ -85,6 +86,8 @@ export const ConnectionContextProvider = ({children}: ConnectionContextProviderP
                     localStorage.setItem('TradingKeySecret', tradingKeyPair.privateKey);
                 }
 
+                const privateWs = new BaseWebsocketService();
+                // privateWs.openWebsocket();
 
                 // const setTradingKeyRes = await userRequestSetTradingKey(nearAccount, tradingKeyPair);
 

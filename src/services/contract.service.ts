@@ -4,6 +4,7 @@ import {environment} from "../environment/environment";
 import {createTransaction, functionCall, Transaction} from "near-api-js/lib/transaction";
 import {serialize} from "near-api-js/lib/utils";
 import keccak256 from "keccak256";
+import BigNumber from "bignumber.js";
 
 const EC = require('elliptic').ec;
 
@@ -193,6 +194,13 @@ export const storageCostOfAnnounceKey = () =>
         args: {},
     });
 
+export const storageCostOfTokenBalance = () =>
+    callViewFunction({
+        contractName: environment.nearWalletConfig.contractName,
+        methodName: 'storage_cost_of_token_balance',
+        args: {},
+    });
+
 export const generateTradingKeyPair = () => {
     const ec = new EC('secp256k1');
     const keyPair = ec.genKeyPair();
@@ -205,10 +213,10 @@ export const generateTradingKeyPair = () => {
 };
 
 export const getTradingKeyPair = () => {
-   const secretKey= localStorage.getItem('TradingKeySecret');
-   if (! secretKey) {
-       return generateTradingKeyPair();
-   }
+    const secretKey = localStorage.getItem('TradingKeySecret');
+    if (!secretKey) {
+        return generateTradingKeyPair();
+    }
     const ec = new EC('secp256k1');
     const keyPair = ec.keyFromPrivate(secretKey);
     return {
@@ -243,3 +251,83 @@ export const isTradingKeySet = async (accountId: string, orderlyKeyPair: KeyPair
             orderly_key: orderlyKeyPair.getPublicKey().toString(),
         },
     });
+
+const base64url = function (aStr: string) {
+    return aStr.replace(/\+/g, '-').replace(/\//g, '_');
+};
+export const signMessageByOrderlyKey = (params: string, keyPair: KeyPair) => {
+    const u8 = Buffer.from(params);
+    const signStr = keyPair.sign(u8);
+    return base64url(Buffer.from(signStr.signature).toString('base64'));
+}
+
+export const depositNear = async (wallet: WalletConnection, amount: string) => {
+    const accountId = wallet.getAccountId();
+    const keyPair = await environment.nearWalletConfig.keyStore.getKey(environment.nearWalletConfig.networkId, accountId);
+    const publicKey = keyPair.getPublicKey();
+
+    const [storageUsage, balanceOf, storageCost, accessKeyInfo] = await Promise.all([
+        userStorageUsage(accountId),
+        storageBalanceOf(environment.nearWalletConfig.contractName, accountId),
+        storageCostOfTokenBalance(),
+        getAccessKeyInfo(accountId, keyPair)
+    ]);
+    const value = new BigNumber(storageUsage).plus(new BigNumber(storageCost)).minus(new BigNumber(balanceOf.total));
+
+    const nonce = ++accessKeyInfo.nonce;
+    const recentBlockHash = serialize.base_decode(accessKeyInfo.block_hash);
+    const transactions: Transaction[] = [];
+
+    if (value.isGreaterThan(0)) {
+        transactions.push(createTransaction(
+            accountId,
+            publicKey,
+            environment.nearWalletConfig.contractName,
+            nonce,
+            [
+                functionCall(
+                    'storage_deposit',
+                    {
+                        receiver_id: environment.nearWalletConfig.contractName,
+                        msg: '',
+
+                    },
+                    BOATLOAD_OF_GAS,
+                    value.toFixed(),
+                )
+            ],
+            recentBlockHash,
+        ))
+    }
+    transactions.push(createTransaction(
+        accountId,
+        publicKey,
+        environment.nearWalletConfig.contractName,
+        nonce + 1,
+        [
+            functionCall(
+                'user_deposit_native_token',
+                {},
+                BOATLOAD_OF_GAS,
+                utils.format.parseNearAmount(amount),
+            )
+        ],
+        recentBlockHash,
+    ))
+    return wallet.requestSignTransactions({
+        transactions,
+    })
+}
+
+export const getWithdrawFee = async () =>
+    callViewFunction({
+        contractName: environment.nearWalletConfig.contractName,
+        methodName: 'get_withdraw_fee',
+        args: {},
+    });
+
+
+export const withdrawNear = async () => {
+
+}
+
