@@ -24,14 +24,10 @@ export const getBalance = async (): Promise<any> => {
         method: 'GET',
         headers,
     })
-        .then(response => response.json())
-        .then(res => {
-            return Promise.resolve(res);
-
-        })
+        .then(response => response.json());
 }
 
-export const getTokenList = async() => {
+export const getTokenList = async () => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
         Accept: 'application/json',
@@ -43,7 +39,7 @@ export const getTokenList = async() => {
         .then(response => response.json())
         .then(res => {
             if (res.success) {
-               return Promise.resolve(res.data.rows);
+                return Promise.resolve(res.data.rows);
             }
         });
 }
