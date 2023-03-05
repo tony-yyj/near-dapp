@@ -43,12 +43,12 @@ export const ConnectionContextProvider = ({children}: ConnectionContextProviderP
 
             const nearConnection = await connect(nearConfig);
             let appKeyPrefix = 'near_app';
-            const connection = new WalletConnection(nearConnection, appKeyPrefix);
-            setWalletConnection(connection);
-            console.log('is sign in', connection.isSignedIn());
-            if (connection.isSignedIn()) {
-                const nearAccount = await nearConnection.account(connection.getAccountId());
-                const accountId = connection.getAccountId();
+            const wallet = new WalletConnection(nearConnection, appKeyPrefix);
+            setWalletConnection(wallet);
+            console.log('is sign in', wallet.isSignedIn());
+            if (wallet.isSignedIn()) {
+                const nearAccount = await nearConnection.account(wallet.getAccountId());
+                const accountId = wallet.getAccountId();
                 const isExist = await checkUserAccountIsExist(accountId);
                 console.log('is exist', isExist);
                 console.log('accountid', accountId)
@@ -56,7 +56,7 @@ export const ConnectionContextProvider = ({children}: ConnectionContextProviderP
                 if (!isExist) {
                     const bounds = await storageBalanceBounds(environment.nearWalletConfig.contractName, accountId);
                     console.log('bounds', bounds)
-                    const storageDepositRes = await storageDeposit(connection, bounds.min);
+                    const storageDepositRes = await storageDeposit(wallet, bounds.min);
                     console.log('storagedeposit', storageDepositRes)
                 }
                 const isAnnounced = await isOrderlyKeyAnnounced(accountId, orderlyKeyPair!);
@@ -71,7 +71,7 @@ export const ConnectionContextProvider = ({children}: ConnectionContextProviderP
                     const value = new BigNumber(storageUsage).plus(new BigNumber(storageCost)).minus(new BigNumber(balanceOf.total));
                     console.log('value', value.shiftedBy(-24).toString())
                     if (value.isGreaterThan(0)) {
-                        const storageDepositRes = await storageDeposit(connection, value.toFixed());
+                        const storageDepositRes = await storageDeposit(wallet, value.toFixed());
                     }
                     const setOrderlyKeyRes = await setAnnounceKey(nearAccount!);
                     console.log('set orderlyKey res', setOrderlyKeyRes);
@@ -94,7 +94,7 @@ export const ConnectionContextProvider = ({children}: ConnectionContextProviderP
 
                 setAccount(nearAccount)
 
-                setAccountId(connection.getAccountId());
+                setAccountId(wallet.getAccountId());
             }
             setLoading(false)
 
