@@ -261,6 +261,7 @@ export const signMessageByOrderlyKey = (params: string, keyPair: KeyPair) => {
     return base64url(Buffer.from(signStr.signature).toString('base64'));
 }
 
+
 export const depositNear = async (wallet: WalletConnection, amount: string) => {
     const accountId = wallet.getAccountId();
     const keyPair = await environment.nearWalletConfig.keyStore.getKey(environment.nearWalletConfig.networkId, accountId);
@@ -327,7 +328,66 @@ export const getWithdrawFee = async () =>
     });
 
 
-export const withdrawNear = async () => {
+export const withdrawNear = async (wallet: WalletConnection, tokenAddress: string, amount: string) => {
+    const accountId = wallet.getAccountId();
+    const keyPair = await environment.nearWalletConfig.keyStore.getKey(environment.nearWalletConfig.networkId, accountId);
+    const publicKey = keyPair.getPublicKey();
+
+    const [storageUsage, balanceOf, storageCost, withdrawFee, accessKeyInfo] = await Promise.all([
+        userStorageUsage(accountId),
+        storageBalanceOf(environment.nearWalletConfig.contractName, accountId),
+        storageCostOfTokenBalance(),
+        getWithdrawFee(),
+        getAccessKeyInfo(accountId, keyPair)
+    ]);
+    const recentBlockHash = serialize.base_decode(accessKeyInfo.block_hash);
+    const value = new BigNumber(storageUsage).plus(new BigNumber(storageCost)).minus(new BigNumber(balanceOf.total));
+    const transactions: Transaction[] = [];
+    if (value.isGreaterThan(0)) {
+        transactions.push(createTransaction(
+            accountId,
+            publicKey,
+            environment.nearWalletConfig.contractName,
+            accessKeyInfo.nonce + 1,
+            [
+                functionCall(
+                    'storage_deposit',
+                    {
+                        receiver_id: environment.nearWalletConfig.contractName,
+                        msg: '',
+
+                    },
+                    BOATLOAD_OF_GAS,
+                    value.toFixed(),
+                )
+            ],
+            recentBlockHash,
+        ))
+    }
+
+    transactions.push(createTransaction(
+        accountId,
+        publicKey,
+        environment.nearWalletConfig.contractName,
+        accessKeyInfo.nonce + 2,
+        [
+            functionCall(
+                'user_request_withdraw',
+                {
+                    token: tokenAddress,
+                    amount: utils.format.parseNearAmount(amount),
+                },
+                BOATLOAD_OF_GAS,
+                withdrawFee,
+            )
+        ],
+        recentBlockHash,
+    ))
+
+    return wallet.requestSignTransactions({
+        transactions,
+    });
+
 
 }
 

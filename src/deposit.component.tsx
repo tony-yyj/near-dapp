@@ -17,11 +17,9 @@ export function DepositComponent() {
         setAmount((e.target as HTMLInputElement).value);
     }
     return (
-        <div>
-            <form>
-                <input type='number' value={amount} onChange={changeValue}/>
-            </form>
-            <button onClick={onDepositClick}>Deposit</button>
-        </div>
+        <form className='flex justify-center gap-2 '>
+            <input type='number' value={amount} onChange={changeValue}/>
+            <div onClick={onDepositClick}>Deposit</div>
+        </form>
     )
 }

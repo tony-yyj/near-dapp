@@ -26,8 +26,24 @@ export const getBalance = async (): Promise<any> => {
     })
         .then(response => response.json())
         .then(res => {
-            console.log('balance', res);
             return Promise.resolve(res);
 
         })
+}
+
+export const getTokenList = async() => {
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        Accept: 'application/json',
+        'Content-Type': 'application/json;charset=utf-8',
+    }
+    return fetch(environment.config.apiUrl + '/v4/public/token', {
+        headers,
+    })
+        .then(response => response.json())
+        .then(res => {
+            if (res.success) {
+               return Promise.resolve(res.data.rows);
+            }
+        });
 }
