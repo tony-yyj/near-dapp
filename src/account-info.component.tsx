@@ -1,10 +1,14 @@
 import {useConnection} from "./ConnectionContext";
 import {useEffect, useState} from "react";
-import {getNearBalance} from "./services/contract.service";
+import {
+    getNearBalance,
+    getUserTradingKey
+} from "./services/contract.service";
 import BigNumber from "bignumber.js";
 import {getBalance} from "./services/asset.service";
 import {DepositComponent} from "./deposit.component";
 import {WithdrawComponent} from "./withdraw.component";
+import {environment} from "./environment/environment";
 
 export function AccountInfoComponent() {
     const {accountId, signOut} = useConnection();
@@ -17,7 +21,19 @@ export function AccountInfoComponent() {
         })
         getUserBalance();
 
+        getTradingKey().then();
+
+
     }, [accountId])
+
+    const getTradingKey = async () => {
+        const orderlyKeyPair = await environment.nearWalletConfig.keyStore.getKey(environment.nearWalletConfig.networkId, accountId!);
+        const pubKey = orderlyKeyPair.getPublicKey().toString();
+
+        getUserTradingKey(accountId!, pubKey!).then(res => {
+            console.log('already set tradingKey', res);
+        })
+    }
 
 
     const getUserBalance = () =>{

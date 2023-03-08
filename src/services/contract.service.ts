@@ -201,6 +201,13 @@ export const storageCostOfTokenBalance = () =>
         args: {},
     });
 
+export const getUserTradingKey= (accountId: string, orderlyKey: string) =>
+    callViewFunction({
+        contractName: environment.nearWalletConfig.contractName,
+        methodName: 'get_user_trading_key',
+        args: {user: accountId, orderly_key: orderlyKey},
+    })
+
 export const generateTradingKeyPair = () => {
     const ec = new EC('secp256k1');
     const keyPair = ec.genKeyPair();
