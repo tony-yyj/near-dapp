@@ -249,6 +249,7 @@ export const userRequestSetTradingKey = (account: Account, tradingKeyPair: any) 
 }
 
 
+
 export const isTradingKeySet = async (accountId: string, orderlyKeyPair: KeyPair) =>
     callViewFunction({
         contractName: environment.nearWalletConfig.contractName,
@@ -397,4 +398,25 @@ export const withdrawNear = async (wallet: WalletConnection, tokenAddress: strin
 
 
 }
+
+
+function handleZero(str: string) {
+    if (str.length < 64) {
+        const zeroArr = new Array(64 - str.length).fill(0);
+        return zeroArr.join('') + str;
+    }
+    return str;
+}
+
+
+export const signMessageByTradingKey = (message: string, tradingKeyPair: any) => {
+    const ec = new EC('secp256k1');
+    const msgHash = keccak256(message);
+    const privateKey = tradingKeyPair.getPrivate('hex');
+    const signature = ec.sign(msgHash, privateKey, 'hex', { canonical: true });
+    const r = signature.r.toJSON();
+    const s = signature.s.toJSON();
+    return `${handleZero(r)}${handleZero(s)}0${signature.recoveryParam}`;
+}
+
 
