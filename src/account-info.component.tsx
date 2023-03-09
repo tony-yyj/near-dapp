@@ -9,11 +9,12 @@ import {getBalance} from "./services/asset.service";
 import {DepositComponent} from "./deposit.component";
 import {WithdrawComponent} from "./withdraw.component";
 import {environment} from "./environment/environment";
+import {ButtonBasic} from "./components/button.component";
 
 export function AccountInfoComponent() {
     const {accountId, signOut} = useConnection();
     const [nearBalance, setNearBalance] = useState<string | null>(null);
-    const [balance, setBalance] = useState<{[key: string]: string}>({})
+    const [balance, setBalance] = useState<{ [key: string]: string }>({})
 
     useEffect(() => {
         getNearBalance(accountId!).then(res => {
@@ -36,11 +37,11 @@ export function AccountInfoComponent() {
     }
 
 
-    const getUserBalance = () =>{
+    const getUserBalance = () => {
         getBalance().then(res => {
             console.log('balance', res);
             if (res.success) {
-                const obj: {[key: string]: string} = {}
+                const obj: { [key: string]: string } = {}
                 res.data.balances.forEach((item: any) => {
                     obj[item.token] = item.holding;
                 })
@@ -50,20 +51,26 @@ export function AccountInfoComponent() {
     }
 
 
-
     return (
-        <div>
-            <p>accountId: {accountId} </p>
-            <p>near balance: {nearBalance} near</p>
-            <div>
-                {Object.keys(balance).map(key => <p key={key}>
-                    {key}: {balance[key]}
-                </p>)}
+        <div className='w-[800px] m-auto p-[20px]'>
+            <div className='flex flex-col justify-items-start justify-start items-start gap-2 border-2 p-2'>
+                <div>accountId: {accountId} </div>
+                <div className='flex gap-10'>
+                    near balance: {nearBalance} near
+                    <ButtonBasic onClick={getUserBalance}>refresh balance</ButtonBasic>
+                </div>
             </div>
             <div className='flex gap-10 justify-center'>
-                <button onClick={signOut}>logout</button>
-                <button onClick={getUserBalance}>refresh balance</button>
-
+                <div onClick={signOut}>logout</div>
+            </div>
+            <div>
+            </div>
+            <div className='border-2 border-cyan-300 w-[600px] m-auto'>
+                {Object.keys(balance).map(key =>
+                    <p className='w-full p-2 flex justify-items-start gap-2' key={key}>
+                        <label>{key}</label>: <span>{balance[key]} </span>
+                    </p>
+                )}
             </div>
             <DepositComponent/>
             <WithdrawComponent/>
