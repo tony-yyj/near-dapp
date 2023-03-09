@@ -6,10 +6,18 @@ enum OrderSideEnum {
     SELL = 'SELL',
 }
 
+enum OrderTypeEnum {
+    LIMIT = 'LIMIT',
+    MARKET = 'MARKET',
+    BID = 'BID',
+    ASK = 'ASK',
+}
+
 export function EntryOrderComponent() {
     const [price, setPrice] = useState<string>('')
     const [amount, setAmount] = useState<string>('')
-    const [type, setType] = useState<string>(OrderSideEnum.BUY);
+    const [orderType, setOrderType] = useState<string>(OrderTypeEnum.LIMIT);
+    const [side, setSideType] = useState<string>(OrderSideEnum.BUY);
 
     const onChangePrice = (event: ChangeEvent) =>
         setPrice((event.target as HTMLInputElement).value);
@@ -19,11 +27,11 @@ export function EntryOrderComponent() {
 
     const placeOrder = () => {
         // order message broker_id=woofi_dex&order_price=2.23&order_quantity=1&order_type=LIMIT&side=BUY&symbol=SPOT_NEAR_USDC
-        const params: {[key: string]: any} = {
+        const params: { [key: string]: any } = {
             order_price: price,
             order_quantity: amount,
-            order_type: 'LIMIT',
-            side: type,
+            order_type: orderType,
+            side: side,
             symbol: 'SPOT_NEAR_USDC',
         }
         console.log(params);
@@ -39,12 +47,19 @@ export function EntryOrderComponent() {
             <h2>Place Order</h2>
 
             <div>
-                <label onClick={() => setType(OrderSideEnum.SELL)}>{OrderSideEnum.SELL}</label>
-                <label onClick={() => setType(OrderSideEnum.BUY)}>{OrderSideEnum.BUY}</label>
+                <label onClick={() => setSideType(OrderSideEnum.SELL)}>{OrderSideEnum.SELL}</label>
+                <label onClick={() => setSideType(OrderSideEnum.BUY)}>{OrderSideEnum.BUY}</label>
+                <div>
+                    order type:{Object.keys(OrderTypeEnum).map(key => <label key={key} onClick={() => setOrderType(key)}>{key}</label>)}
+
+                    <br/>
+                    current type: {orderType}
+
+                </div>
                 <div className='flex justify-items-center flex-col gap-2 w-2/6 m-auto'>
                     <input placeholder='price' value={price} onChange={onChangePrice}/>
                     <input placeholder='amount' value={amount} onChange={onChangeAmount}/>
-                    <div className='cursor-pointer bg-green-400' onClick={placeOrder}>{type}</div>
+                    <div className='cursor-pointer bg-green-400' onClick={placeOrder}>{side}</div>
                 </div>
             </div>
         </div>

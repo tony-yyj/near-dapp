@@ -1,28 +1,31 @@
 import {environment} from "../environment/environment";
 import {getTradingKeyPair, signMessageByOrderlyKey, signMessageByTradingKey} from "../services/contract.service";
 
-enum MethodTypeEnum {
+export enum MethodTypeEnum {
     GET = 'GET',
     POST = 'POST',
     DELETE = 'DELETE',
 }
 
 async function get(url: string, params?: Object) {
-    const accountId = 'neardapp-t1.testnet';
-
-    const headers = await getOrderlySignature(url, accountId);
+    const headers = await getOrderlySignature(url, MethodTypeEnum.GET);
     return requestMethod(url, MethodTypeEnum.GET, params, headers);
 
 }
 
-async function post(url: string, params?:object) {
-
+async function post(url: string, params: { [key: string]: string }) {
+    const sign = getTradingKeySignature(params);
+    params['signature'] = sign.signature;
+    const headers = await getOrderlySignature(url, MethodTypeEnum.POST, params);
+    Object.assign(headers, {'orderly-trading-key': sign.tradingKey})
+    return requestMethod(url, MethodTypeEnum.POST, params, headers);
 }
 
-const getOrderlySignature = async (url: string, accountId: string, params?: null | Object): Promise<{ [key: string]: string }> => {
+const getOrderlySignature = async (url: string, method: MethodTypeEnum, params?: null | Object): Promise<{ [key: string]: string }> => {
+    const accountId = 'neardapp-t1.testnet';
     const urlParam = url.split(environment.config.apiUrl)[1];
     const timestamp = new Date().getTime().toString();
-    let messageStr = [timestamp, 'GET', urlParam].join('');
+    let messageStr = [timestamp, method.toUpperCase(), urlParam].join('');
     if (params && Object.keys(params).length) {
         messageStr += JSON.stringify(params);
     }
@@ -35,10 +38,9 @@ const getOrderlySignature = async (url: string, accountId: string, params?: null
         'orderly-timestamp': timestamp,
         'orderly-signature': sign,
     };
-
 }
 
-const getTradingKeySignature = async (params: { [key: string]: string }, accountId: string) => {
+const getTradingKeySignature = (params: { [key: string]: string }) => {
     const orderMessage = Object.keys(params)
         .sort()
         .map((key: string) => `${key}=${params[key]}`)
@@ -47,14 +49,14 @@ const getTradingKeySignature = async (params: { [key: string]: string }, account
     const tradingKey = getTradingKeyPair();
     const tradingKeySignature = signMessageByTradingKey(orderMessage, tradingKey.keyPair);
     return {
-        'orderly-trading-key': tradingKey?.publicKey.replace('04', ''),
-        sign: tradingKeySignature,
+        tradingKey: tradingKey?.publicKey.replace('04', ''),
+        signature: tradingKeySignature,
     }
 
 }
 
 const requestMethod = (url: string, method: MethodTypeEnum, params: any, headers: { [key: string]: string } = {}) => {
-    Object.assign({}, headers, {
+    Object.assign(headers, {
         'Access-Control-Allow-Origin': '*',
         Accept: 'application/json',
         'Content-Type': 'application/json;charset=utf-8',
@@ -67,10 +69,10 @@ const requestMethod = (url: string, method: MethodTypeEnum, params: any, headers
 
     })
         .then(response => response.json());
-
 }
 
 const requestUtil = {
     get,
+    post,
 }
 export default requestUtil;
