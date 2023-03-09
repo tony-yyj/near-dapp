@@ -66,6 +66,7 @@ export function AccountInfoComponent() {
             <div>
             </div>
             <div className='border-2 border-cyan-300 w-[600px] m-auto'>
+                <h2 className='flex justify-item-center p-2 gap-10'>Balance <ButtonBasic>Refresh Balance</ButtonBasic></h2>
                 {Object.keys(balance).map(key =>
                     <p className='w-full p-2 flex justify-items-start gap-2' key={key}>
                         <label>{key}</label>: <span>{balance[key]} </span>

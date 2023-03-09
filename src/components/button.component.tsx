@@ -3,7 +3,15 @@ interface ButtonBasicProps {
 }
 export const ButtonBasic = (props:any) => {
     return (
-        <div className='bg-green-400 cursor-pointer' {...props}>
+        <div {...props} style={{
+            minWidth: '100px',
+            display: "inline-block",
+            borderRadius: '4px',
+            padding: '2px 5px',
+            color: '#fff',
+            background: '#208353',
+            cursor: 'pointer',
+        }}>
             {props.children}
 
         </div>
