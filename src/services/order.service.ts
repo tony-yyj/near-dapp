@@ -9,6 +9,6 @@ export const fetchOrderList = async (params: any) => {
     return requestUtil.get(environment.config.apiUrl + '/v1/orders', params);
 }
 
-export const cancelOrder = async (params: any) => {
+export const cancelOrder = async (params:{order_id: number; symbol: string}) => {
     return requestUtil.del(environment.config.apiUrl + '/v1/order', params);
 }

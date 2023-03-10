@@ -10,7 +10,6 @@ export enum MethodTypeEnum {
 async function get(url: string, params?: Object) {
     const headers = await getOrderlySignature(url, MethodTypeEnum.GET);
     return requestMethod(url, MethodTypeEnum.GET, params, headers);
-
 }
 
 async function post(url: string, params: { [key: string]: string }) {
@@ -21,7 +20,7 @@ async function post(url: string, params: { [key: string]: string }) {
     return requestMethod(url, MethodTypeEnum.POST, params, headers);
 }
 
-async function del(url: string, params: { [key: string]: string }) {
+async function del(url: string, params: { [key: string]: any}) {
     const sign = getTradingKeySignature(params);
     params['signature'] = sign.signature;
     url += `?${Object.keys(params).sort().map(key => `${key}=${params[key]}`).join('&')}`
@@ -41,7 +40,6 @@ const getOrderlySignature = async (url: string, method: MethodTypeEnum, params?:
     if (params && Object.keys(params).length) {
         messageStr += JSON.stringify(params);
     }
-    console.log('sign str', messageStr);
     const keyPair = await environment.nearWalletConfig.keyStore.getKey(environment.nearWalletConfig.networkId, accountId)
     const sign = signMessageByOrderlyKey(messageStr, keyPair);
 
