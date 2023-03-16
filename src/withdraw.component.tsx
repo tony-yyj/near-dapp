@@ -2,6 +2,7 @@ import {useConnection} from "./ConnectionContext";
 import {ChangeEvent, useEffect, useState} from "react";
 import {withdrawNear} from "./services/contract.service";
 import {getTokenList} from "./services/asset.service";
+import {ButtonBasic} from "./components/button.component";
 
 interface TokenConfigInterface{
     token: string;
@@ -33,7 +34,7 @@ export function WithdrawComponent() {
     return (
         <form className='flex justify-center gap-2 mt-2'>
             <input type='number' value={amount} onChange={onChange}/>
-            <div  onClick={onWithdraw}>Withdraw</div>
+            <ButtonBasic onClick={onWithdraw}>Withdraw</ButtonBasic>
         </form>
     )
 }

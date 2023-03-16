@@ -2,6 +2,7 @@ import {useEffect, useState} from "react";
 import {OrderInterface} from "../interface/order.interface";
 import {cancelOrder, fetchOrderList} from "../services/order.service";
 import {ButtonBasic} from "./button.component";
+import Wrapper from "./wrapper.component";
 
 export function OrderListComponent() {
     const [orderList, setOrderList] = useState<OrderInterface[]>([])
@@ -29,8 +30,9 @@ export function OrderListComponent() {
         })
     }
     return (
-        <div className='border-2'>
-            order list
+        <Wrapper>
+            <Wrapper.Title title={'Order List'}/>
+
             <table>
                 <thead>
                 <tr>
@@ -68,6 +70,6 @@ export function OrderListComponent() {
                 )}
                 </tbody>
             </table>
-        </div>
+        </Wrapper>
     )
 }

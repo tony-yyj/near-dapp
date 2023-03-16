@@ -1,6 +1,7 @@
 import {ChangeEvent, useState} from "react";
 import {entryOrder} from "./services/order.service";
 import {ButtonBasic} from "./components/button.component";
+import Wrapper from "./components/wrapper.component";
 
 enum OrderSideEnum {
     BUY = 'BUY',
@@ -44,7 +45,8 @@ export function EntryOrderComponent() {
     }
 
     return (
-        <div className='border-2 border-cyan-300 w-1/2 m-auto mt-10'>
+        <Wrapper width={'800px'}>
+
             <h2>Place Order</h2>
 
             <div className='flex flex-col gap-2 justify-center justify-items-center'>
@@ -72,6 +74,6 @@ export function EntryOrderComponent() {
                 </div>
                 <ButtonBasic onClick={placeOrder}>{side}</ButtonBasic>
             </div>
-        </div>
+        </Wrapper>
     )
 }
