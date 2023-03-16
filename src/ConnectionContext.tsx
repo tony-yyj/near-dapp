@@ -11,6 +11,7 @@ import {
 } from "./services/contract.service";
 import BigNumber from "bignumber.js";
 import {BaseWebsocketService} from "./services/base-websocket.service";
+import {fetchTokenConfig} from "./services/common.service";
 
 interface ConnectionContextProviderProps {
     children: any;
@@ -85,6 +86,7 @@ export const ConnectionContextProvider = ({children}: ConnectionContextProviderP
                     console.log('set tradingKey res', setTradingKeyRes);
                     localStorage.setItem('TradingKeySecret', tradingKeyPair.privateKey);
                 }
+
 
                 const privateWs = new BaseWebsocketService();
                 // privateWs.openWebsocket();

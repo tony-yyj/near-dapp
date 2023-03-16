@@ -1,7 +1,7 @@
 import {environment} from "../environment/environment";
 import {signMessageByOrderlyKey} from "./contract.service";
 
-export const getBalance = async (): Promise<any> => {
+export const fetchBalance = async (): Promise<any> => {
     const urlParam = '/position/balances';
     const accountId = 'neardapp-t1.testnet';
     const timestamp = new Date().getTime().toString();

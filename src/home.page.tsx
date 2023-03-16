@@ -5,6 +5,7 @@ import {EntryOrderComponent} from "./entry-order.component";
 import {OrderbookComponent} from "./orderbook.component";
 import {OrderListComponent} from "./components/order-list.component";
 import {Color} from "./theme/color";
+import {BalanceComponent} from "./components/balance.component";
 
 export function HomePage() {
     const {accountId} = useConnection();
@@ -16,6 +17,7 @@ export function HomePage() {
                 accountId ?
                     <>
                         <AccountInfoComponent/>
+                        <BalanceComponent/>
                         <OrderbookComponent/>
                         <EntryOrderComponent/>
                         <OrderListComponent/>

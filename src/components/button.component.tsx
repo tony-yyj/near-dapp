@@ -1,7 +1,9 @@
-interface ButtonBasicProps {
-    children: any;
+import {HTMLAttributes} from "react";
+
+interface ButtonBasicProps extends HTMLAttributes<HTMLDivElement>{
+    children?: any;
 }
-export const ButtonBasic = (props:any) => {
+export const ButtonBasic = (props: ButtonBasicProps) => {
     return (
         <div {...props} style={{
             minWidth: '100px',

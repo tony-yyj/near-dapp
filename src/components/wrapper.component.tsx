@@ -1,3 +1,5 @@
+import {ReactNode} from "react";
+
 interface WrapperComponentProps {
     width?: string;
     children: any;
@@ -5,7 +7,6 @@ interface WrapperComponentProps {
 function Wrapper(props: WrapperComponentProps) {
     return (
         <div className=' m-auto p-[20px]' style={{
-            border: '1px solid #ccc',
             width: props.width || '100%',
             color: '#fff',
 
@@ -17,6 +18,7 @@ function Wrapper(props: WrapperComponentProps) {
 
 interface TitleProps{
     title: string;
+    children?: ReactNode;
 }
 
 function Title (props: TitleProps) {
@@ -26,9 +28,11 @@ function Title (props: TitleProps) {
             color: '#fff',
             width: '100%',
             fontWeight: 'bold',
-            textAlign: 'left'
+            textAlign: 'left',
+            borderBottom: '1px solid #fff',
         }}>
             {props.title}
+            {props.children}
         </div>
     )
 }

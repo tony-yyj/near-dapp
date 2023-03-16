@@ -71,15 +71,24 @@ export const callMethodByRequestSignTransaction = async (walletConnection: Walle
 
 
 }
-export const getNearBalance = async (accountId: string) => {
+export const getNearBalance = async (accountId: string): Promise<{token: string; balance: string}> => {
     const provider = new providers.JsonRpcProvider({url: environment.nearWalletConfig.nodeUrl});
-    const balance = await provider.query<AccountView>({
+    return provider.query<AccountView>({
         request_type: 'view_account',
         account_id: accountId,
         finality: 'optimistic',
-    });
-    return balance.amount;
+    }).then(res => ({token: 'NEAR', balance: res.amount}));
 };
+
+export const getNonNativeTokenBalance = (accountId: string,token: string, tokenAddress: string): Promise<{token: string; balance: string}> =>
+    callViewFunction({
+        contractName: tokenAddress,
+        methodName: 'ft_balance_of',
+        args: {
+            account_id: accountId,
+        }
+    }).then(res => ({token, balance: res}));
+
 
 
 function callViewFunction(params: { contractName: string; methodName: string; args: { [key: string]: any } }) {
@@ -201,7 +210,7 @@ export const storageCostOfTokenBalance = () =>
         args: {},
     });
 
-export const getUserTradingKey= (accountId: string, orderlyKey: string) =>
+export const getUserTradingKey = (accountId: string, orderlyKey: string) =>
     callViewFunction({
         contractName: environment.nearWalletConfig.contractName,
         methodName: 'get_user_trading_key',
@@ -247,7 +256,6 @@ export const userRequestSetTradingKey = (account: Account, tradingKeyPair: any) 
     });
 
 }
-
 
 
 export const isTradingKeySet = async (accountId: string, orderlyKeyPair: KeyPair) =>
@@ -413,10 +421,42 @@ export const signMessageByTradingKey = (message: string, tradingKeyPair: any) =>
     const ec = new EC('secp256k1');
     const msgHash = keccak256(message);
     const privateKey = tradingKeyPair.getPrivate('hex');
-    const signature = ec.sign(msgHash, privateKey, 'hex', { canonical: true });
+    const signature = ec.sign(msgHash, privateKey, 'hex', {canonical: true});
     const r = signature.r.toJSON();
     const s = signature.s.toJSON();
     return `${handleZero(r)}${handleZero(s)}0${signature.recoveryParam}`;
 }
+
+export const getUSDCFaucet = async (wallet: WalletConnection,) => {
+    const accountId = wallet.getAccountId();
+    const keyPair = await environment.nearWalletConfig.keyStore.getKey(environment.nearWalletConfig.networkId, accountId);
+    const publicKey = keyPair.getPublicKey();
+
+    const accessKeyInfo = await getAccessKeyInfo(accountId, keyPair);
+    const nonce = ++accessKeyInfo.nonce;
+    const recentBlockHash = serialize.base_decode(accessKeyInfo.block_hash);
+    const transactions: Transaction[] = [];
+    transactions.push(createTransaction(
+        accountId,
+        publicKey,
+        environment.nearWalletConfig.faucetContractName,
+        nonce,
+        [
+            functionCall(
+                'get_tokens',
+                {
+                    account_id: accountId,
+
+                },
+                BOATLOAD_OF_GAS,
+                utils.format.parseNearAmount('0'),
+            )
+        ],
+        recentBlockHash,
+    ))
+    return wallet.requestSignTransactions({
+        transactions,
+    })
+};
 
 

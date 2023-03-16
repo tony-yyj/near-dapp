@@ -4,7 +4,7 @@ export const environment = {
     nearWalletConfig: {
         keyStore: new keyStores.BrowserLocalStorageKeyStore(),
         contractName: 'asset-manager.orderly.testnet',
-        faucetContractName: 'faucet.orderly.testnet',
+        faucetContractName: 'ft-faucet-usdc.orderly.testnet',
         methodNames: ['user_announce_key', 'user_request_set_trading_key', 'create_user_account'],
         networkId: process.env.NODE_ENV === 'development' ? 'testnet' : 'NEAR_NETWORK_ENV',
         nodeUrl: 'https://rpc.testnet.near.org',
