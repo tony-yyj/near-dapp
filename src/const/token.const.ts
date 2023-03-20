@@ -1,9 +1,5 @@
-interface TokenInterface{
-    token: string;
-    tokenAccountId: string;
-    decimals: number;
+import {TokenInterface} from "../interface/token.interface";
 
-}
 export const TokenConst: {[key: string]: TokenInterface} = {
     NEAR: {
        token: 'NEAR',

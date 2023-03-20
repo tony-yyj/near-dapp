@@ -2,6 +2,8 @@ import {ChangeEvent, useState} from "react";
 import {entryOrder} from "./services/order.service";
 import {ButtonBasic} from "./components/button.component";
 import Wrapper from "./components/wrapper.component";
+import {InputComponent} from "./components/input.component";
+import {Select} from "./components/select.component";
 
 enum OrderSideEnum {
     BUY = 'BUY',
@@ -45,34 +47,34 @@ export function EntryOrderComponent() {
     }
 
     return (
-        <Wrapper width={'800px'}>
-
-            <h2>Place Order</h2>
-
+        <Wrapper width={'400px'}>
+            <Wrapper.Title title={'Place Order'}/>
             <div className='flex flex-col gap-2 justify-center justify-items-center'>
                 <div className='flex gap-2 justify-center'>
                     <label onClick={() => setSideType(OrderSideEnum.SELL)}>{OrderSideEnum.SELL}</label>
                     <label onClick={() => setSideType(OrderSideEnum.BUY)}>{OrderSideEnum.BUY}</label>
                 </div>
                 <div className='flex justify-center justify-items-center  gap-2 w-1/2 m-auto'>
-                    <label className='w-1/3 shrink-0'>order type:</label>
-                    {Object.keys(OrderTypeEnum).map(key =>
-                        <label className={`${key === orderType ? 'bg-green-700' : ''} mr-1 p-[5px] text-white`} key={key}
-                               onClick={() => setOrderType(key)}>{key}</label>
-                    )}
-
+                    <label>order type:</label>
+                    <Select value={orderType} onChange={e => setOrderType(e.target.value)}>
+                        {Object.keys(OrderTypeEnum).map(key =>
+                            <option value={key} key={key} >{key}</option>
+                        )}
+                    </Select>
                 </div>
                 <div className='flex justify-items-center  gap-2 w-1/2 m-auto'>
                     <label className='w-1/3 shrink-0'>price:</label>
-                    <input placeholder='price' value={price}
+                    <InputComponent placeholder='price' value={price}
                            onChange={onChangePrice}/>
                 </div>
                 <div className='flex justify-items-center  gap-2 w-1/2 m-auto'>
                     <label className='w-1/3 shrink-0'>amount:</label>
-                    <input placeholder='amount' value={amount}
+                    <InputComponent placeholder='amount' value={amount}
                            onChange={onChangeAmount}/>
                 </div>
-                <ButtonBasic onClick={placeOrder}>{side}</ButtonBasic>
+                <div>
+                    <ButtonBasic onClick={placeOrder}>{side}</ButtonBasic>
+                </div>
             </div>
         </Wrapper>
     )

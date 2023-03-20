@@ -1,15 +1,30 @@
 import {ChangeEvent, useState} from "react";
 import {useConnection} from "./ConnectionContext";
-import {depositNear} from "./services/contract.service";
+import {depositToken} from "./services/contract.service";
 import {ButtonBasic} from "./components/button.component";
+import {Color} from "./theme/color";
+import {InputComponent} from "./components/input.component";
+import {TokenConst} from "./const/token.const";
+import BigNumber from "bignumber.js";
 
-export function DepositComponent() {
+interface DepositComponentProps {
+    token: string;
+}
+
+export function DepositComponent(props: DepositComponentProps) {
     const {walletConnection} = useConnection();
     const [amount, setAmount] = useState<string>('1');
 
     const onDepositClick = () => {
         console.log('value', amount);
-        depositNear(walletConnection!, amount).then();
+        const tokenData = TokenConst[props.token];
+        console.log('tokendata', tokenData, props.token);
+        if (props.token !== 'NEAR') {
+
+            depositToken(walletConnection!, new BigNumber(amount).shiftedBy(tokenData.decimals).toFixed(), tokenData.tokenAccountId).then();
+        } else {
+            depositToken(walletConnection!, amount).then();
+        }
 
 
     }
@@ -19,8 +34,8 @@ export function DepositComponent() {
     }
     return (
         <form className='flex justify-center gap-2 '>
-            <input type='number' value={amount} onChange={changeValue}/>
-            <ButtonBasic onClick={onDepositClick}>Deposit</ButtonBasic>
+            <InputComponent width={100} type='number' value={amount} onChange={changeValue}/>
+            <ButtonBasic color={Color.BUY} onClick={onDepositClick}>Deposit</ButtonBasic>
         </form>
     )
 }

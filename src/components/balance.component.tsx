@@ -7,6 +7,9 @@ import {useConnection} from "../ConnectionContext";
 import {ButtonBasic} from "./button.component";
 import BigNumber from "bignumber.js";
 import {fetchBalance} from "../services/asset.service";
+import {Color} from "../theme/color";
+import {WithdrawComponent} from "../withdraw.component";
+import {DepositComponent} from "../deposit.component";
 
 interface TokenBalanceInterface {
     token: string;
@@ -30,6 +33,10 @@ export function BalanceComponent() {
         {
             name: 'Near Wallet Balance',
             field: 'nearBalance'
+        },
+        {
+            name: 'Operate',
+            field: '',
         }
     ]
 
@@ -60,7 +67,7 @@ export function BalanceComponent() {
 
     }
 
-    const getUserBalance = () =>  {
+    const getUserBalance = () => {
         return fetchBalance().then(res => {
             console.log('balance', res);
             if (res.success) {
@@ -68,7 +75,7 @@ export function BalanceComponent() {
                 res.data.balances.forEach((item: any) => {
                     obj[item.token] = item.holding;
                 })
-              return Promise.resolve(obj)
+                return Promise.resolve(obj)
             } else {
                 return Promise.resolve({})
             }
@@ -77,20 +84,28 @@ export function BalanceComponent() {
 
     const getBalance = () => {
         Promise.all([getUserBalance(), getNearWalletBalance()]).then(([userBalance, nearWalletBalance]) => {
-           const data: TokenBalanceInterface[] = Object.keys(tokenConfig).map(key => {
-              return {
-                 token: key,
-                 balance: userBalance[key],
-                 nearBalance: nearWalletBalance[key],
-              }
-           });
+            const data: TokenBalanceInterface[] = Object.keys(tokenConfig).map(key => {
+                return {
+                    token: key,
+                    balance: userBalance[key],
+                    nearBalance: nearWalletBalance[key],
+                }
+            });
             setBalance(data);
         });
     }
 
     const renderTableCell = (field: string, item: TokenBalanceInterface) => {
-        // @ts-ignore
-       return item[field]
+        if (field) {
+            // @ts-ignore
+            return item[field]
+        }
+        return (
+            <div>
+                <DepositComponent token={item.token}/>
+                <WithdrawComponent token={item.token}/>
+            </div>
+        )
     }
     return (
         <Wrapper width={'800px'}>
@@ -105,12 +120,15 @@ export function BalanceComponent() {
 
                     </Table.Row>
                 </Table.Header>
-                {balance.map(item =>
-                    <Table.Row key={item.token}>
-                        {headers.map(header=> <Table.Cell key={header.field}>{renderTableCell(header.field, item)}</Table.Cell>)}
-                    </Table.Row>
+                <Table.Body>
 
-                )}
+                    {balance.map(item =>
+                        <Table.Row key={item.token}>
+                            {headers.map(header => <Table.Cell
+                                key={header.field}>{renderTableCell(header.field, item)}</Table.Cell>)}
+                        </Table.Row>
+                    )}
+                </Table.Body>
             </Table>
 
         </Wrapper>

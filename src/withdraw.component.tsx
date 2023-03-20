@@ -1,31 +1,32 @@
 import {useConnection} from "./ConnectionContext";
-import {ChangeEvent, useEffect, useState} from "react";
-import {withdrawNear} from "./services/contract.service";
-import {getTokenList} from "./services/asset.service";
+import {ChangeEvent, useState} from "react";
+import {withdrawToken} from "./services/contract.service";
 import {ButtonBasic} from "./components/button.component";
+import {Color} from "./theme/color";
+import {InputComponent} from "./components/input.component";
+import {TokenConst} from "./const/token.const";
+import BigNumber from "bignumber.js";
+import {utils} from "near-api-js";
 
-interface TokenConfigInterface{
+interface WithdrawComponentProps {
     token: string;
-    token_account_id: string;
 }
 
-export function WithdrawComponent() {
+export function WithdrawComponent(props: WithdrawComponentProps) {
     const [amount, setAmount] = useState<string>('');
-    const [tokenList, setTokenList] = useState<TokenConfigInterface[]>([])
     const {walletConnection} = useConnection();
-    useEffect(() => {
-        getTokenList().then(list=> {
-            setTokenList(list);
-
-        })
-    }, [])
     const onWithdraw = () => {
-        const tokenData = tokenList.find(item => item.token === 'NEAR');
+        const tokenData = TokenConst[props.token];
         console.log('token data', tokenData);
         if (!tokenData) {
-           return false;
+            return false;
         }
-        withdrawNear(walletConnection!, tokenData.token_account_id, amount).then();
+        if (props.token === 'NEAR') {
+
+            withdrawToken(walletConnection!, tokenData.tokenAccountId, utils.format.parseNearAmount(amount) || '0',).then();
+        } else {
+            withdrawToken(walletConnection!, tokenData.tokenAccountId, new BigNumber(amount).shiftedBy(tokenData.decimals).toFixed()).then();
+        }
 
     }
     const onChange = (e: ChangeEvent) => {
@@ -33,8 +34,8 @@ export function WithdrawComponent() {
     }
     return (
         <form className='flex justify-center gap-2 mt-2'>
-            <input type='number' value={amount} onChange={onChange}/>
-            <ButtonBasic onClick={onWithdraw}>Withdraw</ButtonBasic>
+            <InputComponent width={100} type='number' value={amount} onChange={onChange}/>
+            <ButtonBasic color={Color.SELL} onClick={onWithdraw}>Withdraw</ButtonBasic>
         </form>
     )
 }

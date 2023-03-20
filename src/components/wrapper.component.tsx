@@ -1,39 +1,50 @@
 import {ReactNode} from "react";
+import styled from "styled-components";
+import {Color} from "../theme/color";
 
 interface WrapperComponentProps {
     width?: string;
     children: any;
 }
+
+const WrapperStyled = styled.div`
+  width: ${(props: WrapperComponentProps) => props.width || '100%'};
+  background: ${Color.WidgetBG};
+  color: #fff;
+  margin: 10px auto;
+  padding: 20px;
+`
+
 function Wrapper(props: WrapperComponentProps) {
     return (
-        <div className=' m-auto p-[20px]' style={{
-            width: props.width || '100%',
-            color: '#fff',
-
-        }}>
+        <WrapperStyled {...props}>
             {props.children}
-        </div>
+        </WrapperStyled>
     )
 }
 
-interface TitleProps{
+interface TitleProps {
     title: string;
     children?: ReactNode;
 }
 
-function Title (props: TitleProps) {
+
+const TitleStyled = styled.div`
+  font-size: 18px;
+  color: #fff;
+  font-weight: bold;
+  text-align: left;
+  display: flex;
+  gap: 20px;
+  padding: 0 10px;
+`
+
+function Title(props: TitleProps) {
     return (
-        <div style={{
-            fontSize: '18px',
-            color: '#fff',
-            width: '100%',
-            fontWeight: 'bold',
-            textAlign: 'left',
-            borderBottom: '1px solid #fff',
-        }}>
+        <TitleStyled>
             {props.title}
             {props.children}
-        </div>
+        </TitleStyled>
     )
 }
 

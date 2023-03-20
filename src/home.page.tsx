@@ -12,14 +12,22 @@ export function HomePage() {
     return (
         <div style={{
             background: Color.BG,
+            minWidth: '800px',
         }}>
             {
                 accountId ?
                     <>
                         <AccountInfoComponent/>
                         <BalanceComponent/>
-                        <OrderbookComponent/>
-                        <EntryOrderComponent/>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            height: '400px',
+                            margin: '0 auto',
+                        }}>
+                            <OrderbookComponent/>
+                            <EntryOrderComponent/>
+                        </div>
                         <OrderListComponent/>
                     </>
                     : <ConnectComponent/>

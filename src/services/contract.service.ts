@@ -277,26 +277,18 @@ export const signMessageByOrderlyKey = (params: string, keyPair: KeyPair) => {
     return base64url(Buffer.from(signStr.signature).toString('base64'));
 }
 
-
-export const depositNear = async (wallet: WalletConnection, amount: string) => {
-    const accountId = wallet.getAccountId();
-    const keyPair = await environment.nearWalletConfig.keyStore.getKey(environment.nearWalletConfig.networkId, accountId);
+export const getStorageDepositTransaction = async (accountId: string, accessKeyInfo: AccessKeyViewRaw, keyPair: KeyPair): Promise<Transaction | null> => {
+    const nonce = ++accessKeyInfo.nonce;
+    const recentBlockHash = serialize.base_decode(accessKeyInfo.block_hash);
     const publicKey = keyPair.getPublicKey();
-
-    const [storageUsage, balanceOf, storageCost, accessKeyInfo] = await Promise.all([
+    const [storageUsage, balanceOf, storageCost] = await Promise.all([
         userStorageUsage(accountId),
         storageBalanceOf(environment.nearWalletConfig.contractName, accountId),
         storageCostOfTokenBalance(),
-        getAccessKeyInfo(accountId, keyPair)
     ]);
     const value = new BigNumber(storageUsage).plus(new BigNumber(storageCost)).minus(new BigNumber(balanceOf.total));
-
-    const nonce = ++accessKeyInfo.nonce;
-    const recentBlockHash = serialize.base_decode(accessKeyInfo.block_hash);
-    const transactions: Transaction[] = [];
-
     if (value.isGreaterThan(0)) {
-        transactions.push(createTransaction(
+        return (createTransaction(
             accountId,
             publicKey,
             environment.nearWalletConfig.contractName,
@@ -316,26 +308,73 @@ export const depositNear = async (wallet: WalletConnection, amount: string) => {
             recentBlockHash,
         ))
     }
-    transactions.push(createTransaction(
-        accountId,
-        publicKey,
-        environment.nearWalletConfig.contractName,
-        nonce + 1,
-        [
-            functionCall(
-                'user_deposit_native_token',
-                {},
-                BOATLOAD_OF_GAS,
-                utils.format.parseNearAmount(amount),
-            )
-        ],
-        recentBlockHash,
-    ))
+
+    return null;
+}
+
+export const depositToken = async (wallet: WalletConnection, amount: string, tokenAddress?: string) => {
+    const accountId = wallet.getAccountId();
+    const keyPair = await environment.nearWalletConfig.keyStore.getKey(environment.nearWalletConfig.networkId, accountId);
+    const publicKey = keyPair.getPublicKey();
+
+    const accessKeyInfo = await getAccessKeyInfo(accountId, keyPair)
+    const transactions: Transaction[] = [];
+    const storageDepositTran = await getStorageDepositTransaction(accountId, accessKeyInfo, keyPair);
+    let nonce = accessKeyInfo.nonce;
+    const recentBlockHash = serialize.base_decode(accessKeyInfo.block_hash);
+    if (storageDepositTran) {
+        transactions.push(storageDepositTran);
+        nonce ++;
+    }
+    if (tokenAddress) {
+        transactions.push(createTransaction(
+            accountId,
+            publicKey,
+            tokenAddress,
+            nonce + 1,
+            [
+                functionCall(
+                    'ft_transfer_call',
+                    {
+                        receiver_id: environment.nearWalletConfig.contractName,
+                        msg: '',
+                        amount,
+                    },
+                    '90000000000000',
+                    '1',
+                )
+            ],
+            recentBlockHash,
+        ))
+
+
+    } else {
+        transactions.push(createTransaction(
+            accountId,
+            publicKey,
+            environment.nearWalletConfig.contractName,
+            nonce + 1,
+            [
+                functionCall(
+                    'user_deposit_native_token',
+                    {},
+                    BOATLOAD_OF_GAS,
+                    utils.format.parseNearAmount(amount),
+                )
+            ],
+            recentBlockHash,
+        ))
+
+
+    }
     return wallet.requestSignTransactions({
         transactions,
     })
 }
 
+export const depositNonNativeToken = async () => {
+
+}
 export const getWithdrawFee = async () =>
     callViewFunction({
         contractName: environment.nearWalletConfig.contractName,
@@ -344,54 +383,33 @@ export const getWithdrawFee = async () =>
     });
 
 
-export const withdrawNear = async (wallet: WalletConnection, tokenAddress: string, amount: string) => {
+export const withdrawToken = async (wallet: WalletConnection, tokenAddress: string, amount: string) => {
     const accountId = wallet.getAccountId();
     const keyPair = await environment.nearWalletConfig.keyStore.getKey(environment.nearWalletConfig.networkId, accountId);
     const publicKey = keyPair.getPublicKey();
-
-    const [storageUsage, balanceOf, storageCost, withdrawFee, accessKeyInfo] = await Promise.all([
-        userStorageUsage(accountId),
-        storageBalanceOf(environment.nearWalletConfig.contractName, accountId),
-        storageCostOfTokenBalance(),
+    const [withdrawFee, accessKeyInfo] = await Promise.all([
         getWithdrawFee(),
         getAccessKeyInfo(accountId, keyPair)
     ]);
     const recentBlockHash = serialize.base_decode(accessKeyInfo.block_hash);
-    const value = new BigNumber(storageUsage).plus(new BigNumber(storageCost)).minus(new BigNumber(balanceOf.total));
     const transactions: Transaction[] = [];
-    if (value.isGreaterThan(0)) {
-        transactions.push(createTransaction(
-            accountId,
-            publicKey,
-            environment.nearWalletConfig.contractName,
-            accessKeyInfo.nonce + 1,
-            [
-                functionCall(
-                    'storage_deposit',
-                    {
-                        receiver_id: environment.nearWalletConfig.contractName,
-                        msg: '',
-
-                    },
-                    BOATLOAD_OF_GAS,
-                    value.toFixed(),
-                )
-            ],
-            recentBlockHash,
-        ))
+    const storageDepositTran = await getStorageDepositTransaction(accountId, accessKeyInfo, keyPair);
+    let nonce = accessKeyInfo.nonce;
+    if (storageDepositTran) {
+        transactions.push(storageDepositTran);
+        nonce ++;
     }
-
     transactions.push(createTransaction(
         accountId,
         publicKey,
         environment.nearWalletConfig.contractName,
-        accessKeyInfo.nonce + 2,
+        nonce + 1,
         [
             functionCall(
                 'user_request_withdraw',
                 {
                     token: tokenAddress,
-                    amount: utils.format.parseNearAmount(amount),
+                    amount,
                 },
                 BOATLOAD_OF_GAS,
                 withdrawFee,
@@ -403,8 +421,6 @@ export const withdrawNear = async (wallet: WalletConnection, tokenAddress: strin
     return wallet.requestSignTransactions({
         transactions,
     });
-
-
 }
 
 
