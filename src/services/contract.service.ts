@@ -372,9 +372,6 @@ export const depositToken = async (wallet: WalletConnection, amount: string, tok
     })
 }
 
-export const depositNonNativeToken = async () => {
-
-}
 export const getWithdrawFee = async () =>
     callViewFunction({
         contractName: environment.nearWalletConfig.contractName,

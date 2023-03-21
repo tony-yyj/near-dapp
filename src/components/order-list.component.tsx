@@ -31,7 +31,7 @@ export function OrderListComponent() {
     }
     return (
         <Wrapper>
-            <Wrapper.Title title={'Order List'}/>
+            <Wrapper.Title title={'Order List'}><ButtonBasic onClick={getOrderList}>Refresh</ButtonBasic></Wrapper.Title>
 
             <table>
                 <thead>

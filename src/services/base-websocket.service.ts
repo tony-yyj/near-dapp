@@ -3,10 +3,9 @@ import UUID from "../utils/uuid.util";
 import {signMessageByOrderlyKey} from "./contract.service";
 
 const PING_TIMEOUT = 10 * 1000; // second
-const CONNECTING_TIMEOUT = 10 * 1000; // second
 const PING_INTERVAL = 10 * 1000; // second
 
-export const getRandomString = (length = 5) => UUID.prototype.createUUID().toString().substr(-length, length);
+export const getRandomString =() => `${new Date().getTime()}${Math.floor(Math.random() * 10000)}`;
 
 export enum WsState {
     connecting,
@@ -15,7 +14,7 @@ export enum WsState {
     closed,
 }
 
-export enum NewWsEventEnum {
+export enum WsEventEnum {
     SUBSCRIBE = 'subscribe',
     UNSCUBSCRIBE = 'unsubscribe',
     PING = 'ping',
@@ -55,7 +54,7 @@ export enum WsTopicEnum {
 
 export interface WsResponseInterface {
     id: string;
-    event?: NewWsEventEnum;
+    event?: WsEventEnum;
     success?: boolean;
     ts?: number;
     data: any;
@@ -114,7 +113,7 @@ export class WsInstancePro {
         try {
             const sendSubscribe = {
                 id: topic,
-                event: NewWsEventEnum.SUBSCRIBE,
+                event: WsEventEnum.SUBSCRIBE,
                 topic,
                 ts: new Date().getTime(),
             }
@@ -124,21 +123,6 @@ export class WsInstancePro {
             console.error(e);
         }
     }
-
-    unsubscribe(topic: string) {
-        try {
-            const sendSubscribe = {
-                id: topic,
-                event: NewWsEventEnum.UNSCUBSCRIBE,
-                topic,
-                ts: new Date().getTime(),
-            }
-            this.send(sendSubscribe);
-        } catch (e) {
-            console.error(`[WS ${this.uniqueKey} UNSUBSCRIBE ERROR] [TOPIC=${topic}]`)
-        }
-    }
-
     wsAuth() {
         const accountId = 'neardapp-t1.testnet';
         if (accountId) {
@@ -149,7 +133,7 @@ export class WsInstancePro {
                 const sign = signMessageByOrderlyKey(timestamp.toString(), orderlyKeyPair);
                 const sendAuth = {
                     id: '123r',
-                    event: NewWsEventEnum.AUTH,
+                    event: WsEventEnum.AUTH,
                     params: {
                         timestamp,
                         sign,
@@ -185,24 +169,17 @@ export class WsInstancePro {
 
 }
 
-export class BaseWebsocketService {
+export class WebsocketService {
     static _created = false;
     static _instance: any = null;
     wsInstancePro?: WsInstancePro;
-    subscribeCachedTopics = new Set<string>();
-
-    static _publicKey(): string {
-        return environment.config.publicWebsocketKey;
-    }
-
     constructor() {
-        if (!BaseWebsocketService._created) {
-            BaseWebsocketService._instance = this;
-            BaseWebsocketService._created = true;
+        if (!WebsocketService._created) {
+            WebsocketService._instance = this;
+            WebsocketService._created = true;
 
         }
-        return BaseWebsocketService._instance;
-
+        return WebsocketService._instance;
     }
 
     needAuth(): boolean {
@@ -210,8 +187,6 @@ export class BaseWebsocketService {
     }
 
     getUserKey(): string {
-        // 如果是private就需要设置为accountId
-        // return BaseWebsocketService._publicKey();
         return 'neardapp-t1.testnet'
     }
 
@@ -258,13 +233,13 @@ export class BaseWebsocketService {
                     console.warn(`[WS ${wsInstancePro.uniqueKey} EVENT ERROR] EVENT: ${event}, ERROR: ${errorMsg}`)
                 }
                 switch (event) {
-                    case NewWsEventEnum.PING:
+                    case WsEventEnum.PING:
                         this.handlePingResponse(wsInstancePro)
                         break;
-                    case NewWsEventEnum.PONG:
+                    case WsEventEnum.PONG:
                         this.handlePongResponse(wsInstancePro)
                         break;
-                    case NewWsEventEnum.AUTH:
+                    case WsEventEnum.AUTH:
                         this.handleAuthResponse(message, wsInstancePro);
                         break;
                 }
@@ -276,9 +251,6 @@ export class BaseWebsocketService {
     }
 
     handleWsOnOpen(wsInstancePro: WsInstancePro) {
-        // this.subscribeCachedTopics.forEach((topic: string) => {
-        //     wsInstancePro.subscribe(topic);
-        // })
         wsInstancePro.wsAuth();
     }
 
@@ -287,7 +259,7 @@ export class BaseWebsocketService {
         wsInstancePro.sendPingTimer = window.setTimeout(() => {
             const sendPing = {
                 id: '',
-                event: NewWsEventEnum.PING,
+                event: WsEventEnum.PING,
                 ts: new Date().getTime(),
             }
             wsInstancePro.send(sendPing);
@@ -298,7 +270,7 @@ export class BaseWebsocketService {
     handlePingResponse(wsInstancePro: WsInstancePro) {
         const sendPong = {
             id: '',
-            event: NewWsEventEnum.PONG,
+            event: WsEventEnum.PONG,
             ts: new Date().getTime(),
         }
         wsInstancePro.send(sendPong)
@@ -314,6 +286,19 @@ export class BaseWebsocketService {
     }
 
     handleTopicResponse(msgData: WsResponseInterface, wsInstancePro: WsInstancePro) {
+        const {topic, data} = msgData;
+        switch (topic) {
+            case WsTopicEnum.BALANCE:
+                const position = Object.entries(data.balance as {[key: string]:any}).map(([token, position]) => {
+                    return {
+                        token,
+                        balance: position.holding,
+                        open: position.averageOpenPrice,
+                    }
+                })
+                console.log('position', position);
+                break;
+        }
 
     }
 

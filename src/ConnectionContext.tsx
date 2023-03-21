@@ -10,8 +10,7 @@ import {
     storageDeposit, userRequestSetTradingKey, userStorageUsage
 } from "./services/contract.service";
 import BigNumber from "bignumber.js";
-import {BaseWebsocketService} from "./services/base-websocket.service";
-import {fetchTokenConfig} from "./services/common.service";
+import { WebsocketService} from "./services/base-websocket.service";
 
 interface ConnectionContextProviderProps {
     children: any;
@@ -88,8 +87,8 @@ export const ConnectionContextProvider = ({children}: ConnectionContextProviderP
                 }
 
 
-                const privateWs = new BaseWebsocketService();
-                // privateWs.openWebsocket();
+                const privateWs = new WebsocketService();
+                privateWs.openWebsocket();
 
                 // const setTradingKeyRes = await userRequestSetTradingKey(nearAccount, tradingKeyPair);
 
